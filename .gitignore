@@ -1,0 +1,14 @@
+node_modules
+.env
+.env.local
+.DS_Store
+dist
+build
+backend/node_modules
+backend/.env
+append-css.cjs
+append-css-2.cjs
+init-db.js
+migrate-theme.js
+repair-glass.cjs
+*.log
