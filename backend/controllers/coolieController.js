@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // Not used here, but kept if you need it elsewhere in the file
 const db = require('../config/db');
+const { saveBase64Image } = require('../utils/fileUpload');
 require('dotenv').config();
 
 exports.registerCoolie = async (req, res) => {
@@ -12,8 +13,8 @@ exports.registerCoolie = async (req, res) => {
     } = req.body;
 
     // 1. Basic validation
-    if (!first_name || !last_name || !email || !password || !age || !phone || !city || !postal_code || !aadhar_number) {
-      return res.status(400).json({ message: 'Please provide all required fields.' });
+    if (!first_name || !last_name || !email || !password || !age || !phone || !city || !postal_code || !aadhar_number || !aadhar_image) {
+      return res.status(400).json({ message: 'Please provide all required fields, including your Aadhar card image.' });
     }
 
     // 2. Check if user exists in passengers
@@ -35,16 +36,31 @@ exports.registerCoolie = async (req, res) => {
     // 5. Fallback Avatar
     const finalAvatar = avatar_url || `https://ui-avatars.com/api/?name=${first_name}+${last_name}&background=0f172a&color=f97316`;
 
-    // 6. Insert into DB (is_approved defaults to false via schema)
-    // FIX: Removed the backslash escaping the closing backtick
-    const result = await db.query(
+    // 6. Save Base64 to Files (using a temporary ID or placeholder before actual insert, 
+    // but better to insert first to get the ID, then update. 
+    // Or just use email-hashed folder. Let's use ID.)
+    
+    // First insert to get the ID
+    const insertResult = await db.query(
       `INSERT INTO coolies (first_name, middle_name, last_name, email, age, phone, city, postal_code, aadhar_number, aadhar_image, avatar_url, password_hash) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-       RETURNING id, first_name, last_name, email, is_approved`,
-      [first_name, middle_name, last_name, email, age, phone, city, postal_code, aadhar_number, aadhar_image, finalAvatar, passwordHash]
+       RETURNING id`,
+      [first_name, middle_name, last_name, email, age, phone, city, postal_code, aadhar_number, 'pending', finalAvatar, passwordHash]
     );
 
-    const newCoolie = result.rows[0];
+    const coolieId = insertResult.rows[0].id;
+
+    // Now save the actual images using the coolieId
+    const savedAadharPath = saveBase64Image(aadhar_image, coolieId, 'aadhar');
+    const savedAvatarPath = avatar_url ? saveBase64Image(avatar_url, coolieId, 'avatar') : finalAvatar;
+
+    // Update the record with the file paths
+    const finalResult = await db.query(
+      'UPDATE coolies SET aadhar_image = $1, avatar_url = $2 WHERE id = $3 RETURNING id, first_name, last_name, email, is_approved',
+      [savedAadharPath, savedAvatarPath, coolieId]
+    );
+
+    const newCoolie = finalResult.rows[0];
 
     // Note: We deliberately do NOT return a JWT token here because unapproved coolies cannot log in.
     res.status(201).json({
@@ -61,5 +77,17 @@ exports.registerCoolie = async (req, res) => {
   } catch (error) {
     console.error('Error during coolie registration:', error);
     res.status(500).json({ message: 'Server error during coolie registration.' });
+  }
+};
+
+exports.getApprovedCoolies = async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, first_name, last_name, email, age, city, avatar_url FROM coolies WHERE is_approved = TRUE'
+    );
+    res.json({ success: true, coolies: result.rows });
+  } catch (error) {
+    console.error('Error fetching approved coolies:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching partners.' });
   }
 };

@@ -948,3 +948,50 @@ select.rail-input { appearance: none; }
 .react-datepicker-popper {
   z-index: 100 !important;
 }
+/* ─── Admin Portal Specifics ─── */
+.admin-nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 0%;
+  background: #10b981;
+  border-radius: 0 4px 4px 0;
+  transition: height 0.3s ease;
+}
+
+.admin-nav-item.active::before {
+  height: 60%;
+}
+
+.admin-nav-item:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #fff !important;
+}
+
+.admin-nav-item.active:hover {
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+.admin-glass-panel {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.5rem;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease forwards;
+}

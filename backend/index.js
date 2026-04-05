@@ -9,11 +9,15 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/coolies', require('./routes/coolie'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/bookings', require('./routes/bookings'));
 
 // Root endpoint just for checking health
 app.get('/', (req, res) => {
