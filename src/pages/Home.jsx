@@ -643,6 +643,45 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══════════════════════ COOLIE PARTNER CTA ═══════════════════════ */}
+      <section style={{ padding: '6rem 2rem', background: 'rgba(249,115,22,0.03)' }}>
+        <div style={{ maxWidth: '72rem', margin: '0 auto', display: 'grid', gap: '4rem', alignItems: 'center' }} className="md:grid-cols-2">
+          <FadeIn order={2} className="md:order-1">
+            <span className="section-pill" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981', marginBottom: '1.25rem', display: 'inline-flex' }}>
+              <UserCheck size={12} /> Become a Partner
+            </span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.8rem,4vw,2.5rem)', color: '#f1f5fd', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+              Are you a professional Coolie? Join our network.
+            </h2>
+            <p style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', lineHeight: 1.8, fontSize: '1.05rem', marginBottom: '2rem' }}>
+              Get more bookings, professional status, and instant payments. We are looking for motivated individuals to join India's largest railway assistance network.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2.5rem' }}>
+              <div>
+                <div style={{ color: '#10b981', fontWeight: 800, fontSize: '1.5rem', marginBottom: '0.25rem' }}>₹25k+</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Average monthly earnings</div>
+              </div>
+              <div>
+                <div style={{ color: '#10b981', fontWeight: 800, fontSize: '1.5rem', marginBottom: '0.25rem' }}>5000+</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Active partners across India</div>
+              </div>
+            </div>
+            <Link to="/coolie-register" style={{ textDecoration: 'none' }}>
+              <AnimatedButton variant="primary" icon={Sparkles} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none' }}>
+                Apply as a Coolie
+              </AnimatedButton>
+            </Link>
+          </FadeIn>
+          <FadeIn order={1} className="md:order-2" delay={0.2}>
+            <div style={{ position: 'relative', borderRadius: '1.5rem', overflow: 'hidden', aspectRatio: '4/3', boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
+              <img src={IMAGES.coolie4} alt="Coolie partner"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(225deg, rgba(16,185,129,0.15) 0%, transparent 60%)' }} />
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
       {/* ═══════════════════════ CTA ═══════════════════════ */}
       <section style={{ padding: '6rem 2rem' }}>
         <FadeIn>

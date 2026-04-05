@@ -88,7 +88,7 @@ export default function Footer() {
           <div>
             <h4 style={{ fontFamily: 'var(--font-display)', color: '#f1f5fd', fontSize: '1.05rem', fontWeight: 700, marginBottom: '1.25rem' }}>Platform</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              {[{ l: 'Home', p: '/' }, { l: 'Book a Coolie', p: '/book' }, { l: 'Browse Coolies', p: '/coolies' }, { l: 'My Dashboard', p: '/dashboard' }].map(({ l, p }) => (
+              {[{ l: 'Home', p: '/' }, { l: 'Book a Coolie', p: '/book' }, { l: 'Browse Coolies', p: '/coolies' }, { l: 'My Dashboard', p: '/dashboard' }, { l: 'Register as Coolie', p: '/coolie-register' }].map(({ l, p }) => (
                 <Link key={l} to={p} style={{
                   fontFamily: 'var(--font-body)', fontSize: '0.9rem', color: '#94a3b8', textDecoration: 'none', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.25rem'
                 }}

@@ -15,6 +15,7 @@ const Dashboard          = lazy(() => import('./pages/Dashboard'));
 const BookCoolie         = lazy(() => import('./pages/BookCoolie'));
 const CoolieListing      = lazy(() => import('./pages/CoolieListing'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
+const CoolieRegister      = lazy(() => import('./pages/CoolieRegister'));
 
 // AnimatePresence needs location inside Router
 function AnimatedRoutes() {
@@ -30,6 +31,7 @@ function AnimatedRoutes() {
           <Route path="/book"               element={<BookCoolie />} />
           <Route path="/coolies"            element={<CoolieListing />} />
           <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+          <Route path="/coolie-register"    element={<CoolieRegister />} />
         </Routes>
       </Suspense>
     </AnimatePresence>

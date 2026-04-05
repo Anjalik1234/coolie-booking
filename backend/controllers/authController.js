@@ -69,20 +69,41 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Please provide email and password.' });
     }
 
-    const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (rows.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+    let user = null;
+    let table = 'users';
+
+    // 1. Check passengers first
+    const passengerRes = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (passengerRes.rows.length > 0) {
+      user = passengerRes.rows[0];
+    } else {
+      // 2. Check coolies
+      const coolieRes = await db.query('SELECT * FROM coolies WHERE email = $1', [email]);
+      if (coolieRes.rows.length > 0) {
+        user = coolieRes.rows[0];
+        table = 'coolies';
+
+        // Check approval
+        if (!user.is_approved) {
+          return res.status(403).json({ 
+            message: 'Your coolie account is pending admin approval. You will be able to login once verified.',
+            status: 'pending_approval' 
+          });
+        }
+      }
     }
 
-    const user = rows[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password.' });
+    }
 
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+      return res.status(401).json({ message: 'Invalid email or password.' });
     }
 
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, table },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -98,10 +119,11 @@ exports.login = async (req, res) => {
       message: 'Login successful',
       user: {
         id: user.id,
-        name: user.name,
+        name: table === 'users' ? user.name : `${user.first_name} ${user.last_name}`,
         email: user.email,
         phone: user.phone,
-        address: user.address
+        role: table === 'users' ? 'passenger' : 'coolie',
+        avatar: table === 'coolies' ? user.avatar_url : null
       }
     });
 
