@@ -9,7 +9,7 @@ import AnimatedButton from '../components/ui/AnimatedButton';
 import PageTransition from '../components/ui/PageTransition';
 import config from '../config/env';
 
-const BG_IMAGE = "../assets/login.png"
+const BG_IMAGE = "/assets/login.png"
 function InputField({ label, type, value, onChange, icon: Icon, placeholder }) {
   const [show, setShow] = useState(false);
   const isPassword = type === 'password';

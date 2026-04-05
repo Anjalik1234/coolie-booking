@@ -1,6 +1,6 @@
 // Central config — import this everywhere instead of import.meta.env directly
 const config = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api',
   apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,
   appName: import.meta.env.VITE_APP_NAME || 'CoolieBook',
   mapsApiKey: import.meta.env.VITE_MAPS_API_KEY || '',
@@ -8,6 +8,12 @@ const config = {
   socketUrl: import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000',
   enable3D: import.meta.env.VITE_ENABLE_3D === 'true',
   enableSounds: import.meta.env.VITE_ENABLE_SOUNDS === 'true',
+  getImageUrl: (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const base = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api').replace('/api', '');
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+  }
 };
 
 export default config;

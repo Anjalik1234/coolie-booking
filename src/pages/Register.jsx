@@ -11,7 +11,7 @@ import AnimatedButton from '../components/ui/AnimatedButton';
 import PageTransition from '../components/ui/PageTransition';
 import config from '../config/env';
 
-const BG_IMAGE = "../assets/getstarted.jpg";
+const BG_IMAGE = "/assets/getstarted.jpg";
 
 const FIELDS = [
   { name: 'name',     label: 'Full Name',      type: 'text',     icon: User,    placeholder: 'Rajesh Kumar' },

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight, Clock, Shield, Users, Star, Train, MapPin,
   CheckCircle, TrendingUp, Award, Zap, ChevronRight, Phone,
-  Luggage, UserCheck, Navigation
+  Luggage, UserCheck, Navigation, Sparkles
 } from 'lucide-react';
 import { useDevice } from '../hooks/useDevice';
 import AnimatedButton from '../components/ui/AnimatedButton';
@@ -14,16 +14,16 @@ import CoolieRunner from '../components/ui/CoolieRunner';
 
 const HeroScene = lazy(() => import('../components/three/HeroScene'));
 
-/* ── Unsplash image URLs ── */
+/* ── Public Assets — use absolute paths ── */
 const IMAGES = {
-  hero: "../assets/hero_train.png", // Indian train
-  station: '../assets/station.jpg', // railway station
-  coolie1: "../assets/coolie1.jpg", // Indian man
-  coolie2: "../assets/coolie2.jpg",
-  coolie3: "../assets/coolie3.jpg",
-  coolie4: "../assets/coolie4.jpg",
-  luggage: "../assets/luggage.jpg",
-  platform: '../assets/platform.jpg',
+  hero: '/assets/hero_train.png',
+  station: '/assets/station.jpg',
+  coolie1: '/assets/coolie1.jpg',
+  coolie2: '/assets/coolie2.jpg',
+  coolie3: '/assets/coolie3.jpg',
+  coolie4: '/assets/coolie4.jpg',
+  luggage: '/assets/luggage.jpg',
+  platform: '/assets/platform.jpg'
 };
 
 function FadeIn({ children, delay = 0, style = {}, className = '' }) {
