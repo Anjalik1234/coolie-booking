@@ -1,6 +1,9 @@
 const BADGE_CONFIG = {
   confirmed: { label: 'Confirmed', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', color: '#34d399' },
   pending:   { label: 'Pending',   bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  color: '#fcd34d' },
+  accepted:  { label: 'Accepted',  bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)',  color: '#34d399' },
+  rejected:  { label: 'Rejected',  bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)',   color: '#f87171' },
+  completed: { label: 'Completed', bg: 'rgba(147,51,234,0.12)',  border: 'rgba(147,51,234,0.3)',  color: '#a855f7' },
   cancelled: { label: 'Cancelled', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)',   color: '#f87171' },
   active:    { label: 'Active',    bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)',  color: '#34d399' },
 };

@@ -1,58 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Star, MapPin, Search, Luggage, UserCheck, Award, Zap, ArrowRight } from 'lucide-react';
+import { Star, MapPin, Search, Luggage, UserCheck, Award, Zap, ArrowRight, Loader2 } from 'lucide-react';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import PageTransition from '../components/ui/PageTransition';
 import TrainTrack from '../components/ui/TrainTrack';
+import axios from 'axios';
+import config from '../config/env';
 
-const HERO_IMG = "../assets/train.jpg";
-
-const COOLIES = [
-  {
-    id: 1, name: 'Raju Sharma',   station: 'Mumbai CSMT',       rating: 4.9, trips: 1200, available: true,
-    img: "../assets/coolie1.jpg",
-    speciality: 'Heavy luggage', badge: 'Top Rated', badgeIcon: Award,
-  },
-  {
-    id: 2, name: 'Mohan Verma',   station: 'Pune Junction',     rating: 4.7, trips: 850,  available: true,
-    img: "../assets/coolie2.jpg",
-    speciality: 'Elderly assist', badge: 'Most Kind', badgeIcon: UserCheck,
-  },
-  {
-    id: 3, name: 'Suresh Patel',  station: 'Mumbai Central',    rating: 4.8, trips: 2100, available: false,
-    img: "../assets/coolie3.jpg",
-    speciality: 'Tourist guide',  badge: 'Expert', badgeIcon: Zap,
-  },
-  {
-    id: 4, name: 'Ramesh Yadav',  station: 'New Delhi',         rating: 4.6, trips: 670,  available: true,
-    img: "../assets/coolie4.jpg",
-    speciality: 'Express service', badge: 'Fast', badgeIcon: Zap,
-  },
-  {
-    id: 5, name: 'Ajay Kumar',    station: 'Howrah Junction',   rating: 4.9, trips: 3200, available: true,
-    img:"../assets/coolie5.jpg",
-    speciality: 'Disabled assist', badge: 'Veteran', badgeIcon: Award,
-  },
-  {
-    id: 6, name: 'Vijay Singh',   station: 'Chennai Central',   rating: 4.5, trips: 490,  available: false,
-    img:"../assets/coolie6.jpg",
-    speciality: 'Night service',  badge: 'Night Pro', badgeIcon: Star,
-  },
-];
+const HERO_IMG = "/assets/train.jpg";
 
 function CoolieCard({ coolie, delay }) {
-  const BadgeIcon = coolie.badgeIcon;
-  const statusColor = coolie.available ? '#10b981' : '#f59e0b';
+  const BadgeIcon = Award; // Default for now
+  const available = true; // Default for real users
+  const statusColor = '#10b981';
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      whileHover={{ y: -8, boxShadow: coolie.available ? '0 20px 50px rgba(249,115,22,0.2)' : '0 16px 40px rgba(0,0,0,0.3)' }}
+      whileHover={{ y: -8, boxShadow: '0 20px 50px rgba(249,115,22,0.2)' }}
       style={{
         background: 'rgba(15,22,36,0.9)',
-        border: `1px solid ${coolie.available ? 'rgba(249,115,22,0.2)' : 'rgba(45,63,96,0.8)'}`,
+        border: '1px solid rgba(249,115,22,0.2)',
         borderRadius: '1.5rem', overflow: 'hidden',
         transition: 'all 0.35s',
       }}
@@ -74,10 +44,10 @@ function CoolieCard({ coolie, delay }) {
           fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: statusColor, fontWeight: 700,
         }}>
           <motion.span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor, display: 'inline-block' }}
-            animate={{ opacity: coolie.available ? [1, 0.3, 1] : 1 }}
-            transition={{ duration: 1.5, repeat: coolie.available ? Infinity : 0 }}
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
           />
-          {coolie.available ? 'Active' : 'Busy'}
+          Active
         </div>
         {/* Badge */}
         <div style={{
@@ -87,7 +57,7 @@ function CoolieCard({ coolie, delay }) {
           display: 'flex', alignItems: 'center', gap: '0.35rem',
           fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: '#fcd34d', fontWeight: 700,
         }}>
-          <BadgeIcon size={10} /> {coolie.badge}
+          <BadgeIcon size={10} /> {coolie.trips > 1000 ? 'Expert' : 'Verified'}
         </div>
       </div>
 
@@ -120,13 +90,12 @@ function CoolieCard({ coolie, delay }) {
           </span>
         </div>
 
-        <Link to="/book" style={{ textDecoration: 'none', display: 'block' }}>
+        <Link to="/book" state={{ coolieId: coolie.id, coolieName: `${coolie.first_name} ${coolie.last_name}` }} style={{ textDecoration: 'none', display: 'block' }}>
           <AnimatedButton
-            variant={coolie.available ? 'primary' : 'ghost'}
-            disabled={!coolie.available}
+            variant="primary"
             style={{ width: '100%', padding: '0.7rem', fontSize: '0.875rem' }}
           >
-            {coolie.available ? 'Book Now' : 'Currently Unavailable'}
+            Book Now
           </AnimatedButton>
         </Link>
       </div>
@@ -137,15 +106,31 @@ function CoolieCard({ coolie, delay }) {
 export default function CoolieListing() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [coolies, setCoolies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCoolies = async () => {
+      try {
+        const res = await axios.get(`${config.apiBaseUrl}/coolies/approved`);
+        setCoolies(res.data.coolies);
+      } catch (err) {
+        console.error('Error fetching coolies:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCoolies();
+  }, []);
 
   const filtered = useMemo(() =>
-    COOLIES.filter((c) => {
-      const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-                          c.station.toLowerCase().includes(search.toLowerCase());
-      const matchFilter = filter === 'all' || (filter === 'available' && c.available) || (filter === 'unavailable' && !c.available);
-      return matchSearch && matchFilter;
+    coolies.filter((c) => {
+      const fullName = `${c.first_name} ${c.last_name}`.toLowerCase();
+      const matchSearch = fullName.includes(search.toLowerCase()) ||
+                          c.city.toLowerCase().includes(search.toLowerCase());
+      return matchSearch;
     }),
-  [search, filter]);
+  [search, coolies]);
 
   return (
     <PageTransition>
@@ -171,7 +156,7 @@ export default function CoolieListing() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
             style={{ fontFamily: 'var(--font-body)', color: '#94a3b8' }}
           >
-            <span style={{ color: '#10b981', fontWeight: 600 }}>{COOLIES.filter(c => c.available).length} coolies</span> ready at your station right now
+            <span style={{ color: '#10b981', fontWeight: 600 }}>{coolies.length} coolies</span> ready at your station right now
           </motion.p>
         </div>
       </section>
@@ -206,14 +191,18 @@ export default function CoolieListing() {
         </motion.div>
 
         {/* Grid */}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '5rem' }}>
+            <Loader2 className="animate-spin" size={40} color="#f97316" />
+          </div>
+        ) : filtered.length > 0 ? (
           <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {filtered.map((c, i) => <CoolieCard key={c.id} coolie={c} delay={i * 0.07} />)}
+            {filtered.map((c, i) => <CoolieCard key={c.id} coolie={{ ...c, name: `${c.first_name} ${c.last_name}`, station: c.city, img: config.getImageUrl(c.avatar_url), rating: 4.8, trips: 100 }} delay={i * 0.07} />)}
           </div>
         ) : (
           <div style={{ background: 'rgba(15,22,36,0.7)', border: '1px solid rgba(249,115,22,0.1)', borderRadius: '1.25rem', padding: '5rem 2rem', textAlign: 'center' }}>
             <Search size={40} color="#2d3f60" style={{ margin: '0 auto 1rem', display: 'block' }} />
-            <p style={{ fontFamily: 'var(--font-body)', color: '#94a3b8' }}>No coolies found matching your search.</p>
+            <p style={{ fontFamily: 'var(--font-body)', color: '#94a3b8' }}>No partners found matching your search.</p>
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Package, Clock, Users, ChevronRight, ChevronLeft, Train,
@@ -14,7 +14,7 @@ import AnimatedButton from '../components/ui/AnimatedButton';
 import PageTransition from '../components/ui/PageTransition';
 import config from '../config/env';
 
-const HERO_IMAGE = "../assets/train.jpg"; 
+const HERO_IMAGE = "/assets/train.jpg"; 
 
 const STATIONS = [
   'Mumbai CSMT', 'Mumbai Central', 'Pune Junction', 'Lokmanya Tilak Terminal',
@@ -54,12 +54,26 @@ function SelectableCard({ selected, onClick, children }) {
 }
 
 export default function BookCoolie() {
-  const [step, setStep]   = useState(0);
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [form, setForm]   = useState({ station: '', trainNumber: '', platform: '', luggageType: '', date: null, time: null, passengers: 1, notes: '' });
-
   const { addBooking, isAuthenticated } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const coolieId = location.state?.coolieId;
+  const coolieName = location.state?.coolieName;
+
+  const [form, setForm] = useState({ 
+    station: '', 
+    trainNumber: '', 
+    platform: '', 
+    luggageType: '', 
+    date: null, 
+    time: null, 
+    passengers: 1, 
+    notes: '',
+    coolieId: coolieId || null
+  });
+
   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   const canProceed = [
@@ -82,27 +96,30 @@ export default function BookCoolie() {
     }
     setLoading(true);
     try {
-      const res = await axios.post(`${config.apiBaseUrl}/bookings`, form, {
+      const res = await axios.post(`${config.apiBaseUrl}/bookings`, {
+        ...form,
+        date: form.date?.toISOString().split('T')[0],
+        time: form.time?.toLocaleTimeString([], { hour12: false })
+      }, {
         withCredentials: true,
         timeout: config.apiTimeout,
       });
-      addBooking(res.data.booking || { ...form, id: Date.now().toString(), status: 'confirmed' });
+      addBooking(res.data.booking);
       await Swal.fire({
         icon: 'success',
         title: 'Booking Confirmed!',
-        text: 'Your coolie assignment is confirmed. Safe travels!',
+        text: coolieName ? `Your request has been sent to ${coolieName}.` : 'Your coolie assignment is confirmed. Safe travels!',
         background: 'rgba(15, 23, 42, 0.95)', color: '#f8fafc', confirmButtonColor: '#10b981'
       });
       navigate('/booking-confirmation');
-    } catch {
-      addBooking({ ...form, id: Date.now().toString(), status: 'confirmed' });
-      await Swal.fire({
-        icon: 'success',
-        title: 'Booking Confirmed!',
-        text: 'Your coolie assignment is confirmed. Safe travels!',
-        background: 'rgba(15, 23, 42, 0.95)', color: '#f8fafc', confirmButtonColor: '#10b981'
+    } catch (err) {
+      console.error('Booking failed:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Booking Failed',
+        text: err.response?.data?.message || 'Something went wrong while processing your booking.',
+        background: 'rgba(15, 23, 42, 0.95)', color: '#f8fafc', confirmButtonColor: '#ef4444'
       });
-      navigate('/booking-confirmation');
     } finally { setLoading(false); }
   };
 

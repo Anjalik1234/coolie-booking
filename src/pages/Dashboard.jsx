@@ -1,227 +1,228 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Train, Plus, Calendar, MapPin, Package, User, Ticket } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Train, Plus, Calendar, MapPin, Package, User, Ticket, 
+  Clock, CheckCircle2, ChevronRight, Luggage, Star, Info
+} from 'lucide-react';
+import axios from 'axios';
 import useStore from '../store/useStore';
 import StatusBadge from '../components/ui/StatusBadge';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import PageTransition from '../components/ui/PageTransition';
+import config from '../config/env';
 
 const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 
-const STAT_COLORS = {
-  'bg-rail-500': '#f97316',
-  'bg-green-600': '#16a34a',
-  'bg-red-600': '#dc2626',
-  'bg-blue-600': '#2563eb',
-};
-
-function StatCard({ icon: Icon, label, value, color }) {
-  const bg = STAT_COLORS[color] || '#f97316';
+function StatCard({ icon: Icon, label, value, color, delay }) {
   return (
     <motion.div
       variants={fadeUp}
+      transition={{ delay }}
       style={{
-        background: 'rgba(15,22,36,0.85)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(249,115,22,0.15)',
-        borderRadius: '1.25rem',
-        padding: '1.25rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
+        background: 'rgba(15,22,36,0.5)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255,255,255,0.05)',
+        borderRadius: '1.5rem',
+        padding: '1.5rem',
+        flex: 1,
       }}
     >
-      <div style={{
-        width: '3rem', height: '3rem',
-        background: `${bg}22`,
-        border: `1px solid ${bg}40`,
-        borderRadius: '0.875rem',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      }}>
-        <Icon size={20} color={bg} />
-      </div>
-      <div>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.75rem', color: '#f1f5fd', lineHeight: 1 }}>{value}</div>
-        <div style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.8rem', marginTop: '0.25rem' }}>{label}</div>
-      </div>
-    </motion.div>
-  );
-}
-
-function BookingCard({ booking }) {
-  const { cancelBooking } = useStore();
-  return (
-    <motion.div
-      variants={fadeUp}
-      whileHover={{ x: 4, boxShadow: '0 4px 20px rgba(249,115,22,0.1)' }}
-      style={{
-        background: 'rgba(15,22,36,0.85)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(249,115,22,0.12)',
-        borderRadius: '1.25rem',
-        padding: '1.25rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-        transition: 'all 0.25s',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-        {/* Icon */}
-        <div style={{
-          width: '3rem', height: '3rem',
-          background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)',
-          borderRadius: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <Train size={20} color="#fb923c" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${color}15`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={20} color={color} />
         </div>
-
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#f1f5fd', fontSize: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {booking.station || 'Mumbai CSMT'}
-            </h3>
-            <StatusBadge status={booking.status || 'confirmed'} />
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.875rem' }}>
-            {[
-              { icon: Calendar, text: booking.date || 'Apr 12, 2026' },
-              { icon: Package,  text: booking.luggageType || '2 bags' },
-              { icon: MapPin,   text: `Platform ${booking.platform || '3'}` },
-            ].map(({ icon: I, text }) => (
-              <span key={text} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', color: '#94a3b8', fontFamily: 'var(--font-body)' }}>
-                <I size={12} color="#64748b" /> {text}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Cancel */}
-        {(booking.status === 'confirmed' || booking.status === 'pending') && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => cancelBooking(booking.id)}
-            style={{
-              fontSize: '0.75rem', color: '#f87171', background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)', padding: '0.375rem 0.875rem',
-              borderRadius: '0.625rem', fontFamily: 'var(--font-body)', cursor: 'pointer',
-              transition: 'all 0.2s', flexShrink: 0,
-            }}
-          >
-            Cancel
-          </motion.button>
-        )}
+        <div style={{ fontFamily: 'var(--font-body)', color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>{label}</div>
       </div>
+      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '2rem', color: '#f1f5fd', lineHeight: 1 }}>{value}</div>
     </motion.div>
   );
 }
 
 export default function Dashboard() {
-  const { user, bookings, isAuthenticated } = useStore();
+  const { user, setBookings, isAuthenticated } = useStore();
+  const [localBookings, setLocalBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => { if (!isAuthenticated) navigate('/login'); }, [isAuthenticated, navigate]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    // If user is a coolie, they belong on the coolie dashboard
+    if (user?.role === 'coolie') {
+      navigate('/coolie-dashboard');
+      return;
+    }
 
-  const confirmed = bookings.filter((b) => b.status === 'confirmed').length;
-  const cancelled = bookings.filter((b) => b.status === 'cancelled').length;
+    const fetchBookings = async () => {
+      try {
+        const res = await axios.get(`${config.apiBaseUrl}/bookings/my-bookings`, { withCredentials: true });
+        setLocalBookings(res.data.bookings);
+        setBookings(res.data.bookings);
+      } catch (err) {
+        console.error('Fetch bookings error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookings();
+  }, [isAuthenticated, navigate, user, setBookings]);
 
-  const displayBookings = bookings.length > 0 ? bookings : [
-    { id: 'demo1', station: 'Mumbai CSMT', date: 'Apr 12, 2026', luggageType: '2 bags', platform: '3', status: 'confirmed' },
-    { id: 'demo2', station: 'Pune Junction', date: 'Apr 8, 2026', luggageType: '1 bag', platform: '1', status: 'cancelled' },
+  const activeBooking = localBookings.find(b => b.status === 'pending' || b.status === 'accepted');
+  const stats = [
+    { label: 'Total Trips', value: localBookings.length, icon: Train, color: '#f97316' },
+    { label: 'Completed', value: localBookings.filter(b => b.status === 'completed').length, icon: CheckCircle2, color: '#10b981' },
+    { label: 'Stations', value: new Set(localBookings.map(b => b.station)).size, icon: MapPin, color: '#3b82f6' },
   ];
 
   return (
     <PageTransition>
-      <div style={{ minHeight: '100vh', paddingTop: '6rem', paddingBottom: '4rem', position: 'relative' }}>
-
-        {/* Bg glow */}
-        <div style={{ position: 'fixed', inset: 0, zIndex: -1, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '700px', height: '300px', background: 'radial-gradient(ellipse, rgba(249,115,22,0.05) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+      <div style={{ minHeight: '100vh', paddingTop: '6rem', paddingBottom: '6rem', background: '#020617', color: '#f8fafc' }}>
+        
+        {/* Cinematic Backdrop Glow */}
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+          <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(249,115,22,0.04) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+          <div style={{ position: 'absolute', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(59,130,246,0.03) 0%, transparent 70%)', filter: 'blur(80px)' }} />
         </div>
 
-        <div style={{ maxWidth: '56rem', margin: '0 auto', padding: '0 1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-
-          {/* Welcome Banner */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              display: 'flex', flexDirection: 'column', gap: '1rem',
-              alignItems: 'flex-start',
-            }}
-            className="sm:flex-row sm:items-center"
-          >
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                <div style={{
-                  width: '3.5rem', height: '3.5rem',
-                  background: 'linear-gradient(135deg, #f97316, #f59e0b)',
-                  borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 4px 20px rgba(249,115,22,0.35)',
-                }}>
-                  <User size={24} color="#ffffff" />
-                </div>
-                <div>
-                  <p style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.85rem' }}>Good morning 👋</p>
-                  <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.75rem', color: '#f1f5fd', lineHeight: 1.2 }}>
-                    {user?.name || 'Traveler'}
-                  </h1>
-                </div>
-              </div>
-              <p style={{ fontFamily: 'var(--font-body)', color: '#64748b', fontSize: '0.85rem' }}>{user?.email}</p>
+        <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '0 2rem', position: 'relative', zIndex: 1 }}>
+          
+          {/* Header Section */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
+            <div>
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <span style={{ padding: '0.25rem 0.75rem', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', borderRadius: '999px', fontSize: '0.7rem', color: '#f97316', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Passenger Portal</span>
+              </motion.div>
+              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                Welcome back, <span style={{ color: '#f97316' }}>{user?.name?.split(' ')[0]}</span>
+              </motion.h1>
             </div>
-            <Link to="/book" style={{ textDecoration: 'none' }}>
-              <AnimatedButton variant="primary" icon={Plus}>New Booking</AnimatedButton>
+            <Link to="/coolies">
+              <AnimatedButton variant="primary" icon={Plus}>Book Assistance</AnimatedButton>
             </Link>
-          </motion.div>
+          </div>
 
-          {/* Stats Grid */}
-          <motion.div
-            variants={stagger} initial="initial" animate="animate"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}
-            className="md:grid-cols-4"
-          >
-            <StatCard icon={Train}    label="Total Bookings" value={displayBookings.length}  color="bg-rail-500" />
-            <StatCard icon={Calendar} label="Confirmed"       value={confirmed || 1}          color="bg-green-600" />
-            <StatCard icon={Package}  label="Cancelled"       value={cancelled || 1}          color="bg-red-600" />
-            <StatCard icon={MapPin}   label="Stations Used"   value="3"                        color="bg-blue-600" />
-          </motion.div>
+          {/* Main Layout Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '2.5rem' }}>
+            
+            {/* Left Column: Active & History */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+              
+              {/* Highlight Card: Next Journey */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Clock size={16} color="#f97316" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Request</span>
+                </div>
+                
+                {activeBooking ? (
+                  <div style={{ background: 'linear-gradient(135deg, rgba(15,22,36,0.8), rgba(15,22,36,0.4))', border: '1px solid rgba(249,115,22,0.2)', borderRadius: '2rem', padding: '2rem', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: '-50%', right: '-10%', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+                      <div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{activeBooking.station}</div>
+                        <div style={{ display: 'flex', gap: '1.5rem', color: '#94a3b8', fontSize: '0.9rem' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Calendar size={14} /> {activeBooking.date}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Ticket size={14} /> Platform {activeBooking.platform}</span>
+                        </div>
+                      </div>
+                      <StatusBadge status={activeBooking.status} />
+                    </div>
+                    
+                    <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <img src={config.getImageUrl(activeBooking.coolie_avatar) || `https://ui-avatars.com/api/?name=${activeBooking.coolie_first_name}&background=0f172a&color=f97316`} style={{ width: '48px', height: '48px', borderRadius: '14px', objectFit: 'cover' }} alt="Coolie" />
+                      <div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{activeBooking.coolie_first_name} {activeBooking.coolie_last_name}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Assigned Partner • {activeBooking.coolie_phone}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ background: 'rgba(15,22,36,0.3)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '2rem', padding: '3rem', textAlign: 'center' }}>
+                    <div style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.03)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                      <Luggage size={20} color="#334155" />
+                    </div>
+                    <p style={{ color: '#64748b', fontSize: '0.9rem' }}>No active journeys. Ready for your next trip?</p>
+                  </div>
+                )}
+              </motion.div>
 
-          {/* Booking History */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.35rem', color: '#f1f5fd' }}>Booking History</h2>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#64748b' }}>{displayBookings.length} total</span>
+              {/* History List */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+                 <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Recent Activity</h3>
+                  <Link to="/coolies" style={{ fontSize: '0.8rem', color: '#f97316', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>View All <ChevronRight size={14} /></Link>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {localBookings.map((b, i) => (
+                    <motion.div key={b.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + (i * 0.05) }} style={{ background: 'rgba(15,22,36,0.4)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '1.25rem', padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: '40px', height: '40px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <CheckCircle2 size={18} color="#94a3b8" />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{b.station}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.date} • {b.luggage_type}</div>
+                        </div>
+                      </div>
+                      <StatusBadge status={b.status} />
+                    </motion.div>
+                  ))}
+                  
+                  {localBookings.length === 0 && !loading && (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: '#475569', fontSize: '0.85rem' }}>No past bookings found.</div>
+                  )}
+                </div>
+              </motion.div>
             </div>
 
-            <motion.div variants={stagger} initial="initial" animate="animate" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {displayBookings.map((booking) => <BookingCard key={booking.id} booking={booking} />)}
-            </motion.div>
-
-            {displayBookings.length === 0 && (
-              <div style={{
-                background: 'rgba(15,22,36,0.7)', border: '1px solid rgba(249,115,22,0.1)',
-                borderRadius: '1.25rem', padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
-              }}>
-                <div style={{
-                  width: '64px', height: '64px', background: 'rgba(249,115,22,0.1)',
-                  borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '1rem'
-                }}>
-                  <Ticket size={28} color="#f97316" />
+            {/* Right Column: Stats & Profile */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              
+              {/* Profile Card */}
+              <div style={{ background: 'rgba(15,22,36,0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '2rem', padding: '2rem', textAlign: 'center' }}>
+                <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1.25rem' }}>
+                  <div style={{ width: '80px', height: '80px', background: 'linear-gradient(45deg, #f97316, #fb923c)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                    <User size={36} color="white" />
+                  </div>
+                  <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '24px', height: '24px', background: '#10b981', border: '3px solid #020617', borderRadius: '50%' }} />
                 </div>
-                <p style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', marginBottom: '1.5rem' }}>No bookings yet.</p>
-                <Link to="/book" style={{ textDecoration: 'none' }}>
-                  <AnimatedButton variant="outline">Book your first coolie</AnimatedButton>
-                </Link>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.25rem' }}>{user?.name}</h3>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Verified Passenger</p>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(255,255,255,0.05)', borderRadius: '1rem', overflow: 'hidden' }}>
+                  <div style={{ padding: '1rem', background: 'rgba(15,22,36,0.6)' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Trips</div>
+                    <div style={{ fontWeight: 800 }}>{localBookings.length}</div>
+                  </div>
+                  <div style={{ padding: '1rem', background: 'rgba(15,22,36,0.6)' }}>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Points</div>
+                    <div style={{ fontWeight: 800, color: '#fcd34d' }}>120</div>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Mini Stats */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {stats.map((s, i) => <StatCard key={s.label} {...s} delay={0.5 + (i * 0.1)} />)}
+              </div>
+
+              {/* Promo Card */}
+              <div style={{ background: 'linear-gradient(225deg, #f97316, #ea580c)', borderRadius: '1.5rem', padding: '1.5rem', color: 'white', position: 'relative', overflow: 'hidden' }}>
+                <Star size={60} style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.15 }} />
+                <h4 style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.5rem', position: 'relative', zIndex: 1 }}>Premium Pass</h4>
+                <p style={{ fontSize: '0.8rem', opacity: 0.9, marginBottom: '1rem', position: 'relative', zIndex: 1 }}>Get priority coolie assignment and zero cancellation fees.</p>
+                <div style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '0.75rem', padding: '0.5rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>Upgrade Now</div>
+              </div>
+            </div>
+
           </div>
         </div>
+
       </div>
     </PageTransition>
   );
