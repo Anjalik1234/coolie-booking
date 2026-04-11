@@ -1,15 +1,43 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Users, UserCheck, Clock, TrendingUp, 
-  ArrowUpRight, ArrowDownRight, Activity, Train
+  ArrowUpRight, ArrowDownRight, Activity, Train, Loader2
 } from 'lucide-react';
+import axios from 'axios';
+import config from '../config/env';
 
 export default function AdminDashboard() {
-  const stats = [
-    { label: 'Total Coolies', value: '2,481', change: '+12%', icon: UserCheck, color: '#10b981' },
-    { label: 'Active Passengers', value: '48.9K', change: '+5.2%', icon: Users, color: '#3b82f6' },
-    { label: 'Pending Approvals', value: '14', change: '-2', icon: Clock, color: '#f59e0b' },
-    { label: 'Total Revenue', value: '₹4.2M', change: '+18%', icon: TrendingUp, color: '#8b5cf6' },
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${config.apiBaseUrl}/admin/stats`, { withCredentials: true });
+        setStats(res.data.stats);
+      } catch (err) {
+        console.error('Failed to fetch admin stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 className="animate-spin" size={40} color="#10b981" />
+      </div>
+    );
+  }
+
+  const statCards = [
+    { label: 'Total Coolies', value: stats?.totalCoolies || 0, change: '+12%', icon: UserCheck, color: '#10b981' },
+    { label: 'Active Passengers', value: stats?.totalPassengers || 0, change: '+5.2%', icon: Users, color: '#3b82f6' },
+    { label: 'Pending Approvals', value: stats?.pendingApprovals || 0, change: 'Update', icon: Clock, color: '#f59e0b' },
+    { label: 'Total Revenue', value: stats?.totalRevenue ? `₹${stats.totalRevenue.toLocaleString()}` : '₹0', change: '+18%', icon: TrendingUp, color: '#8b5cf6' },
   ];
 
   return (
@@ -35,7 +63,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-        {stats.map((s, i) => (
+        {statCards.map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 20 }}
@@ -50,8 +78,8 @@ export default function AdminDashboard() {
               <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${s.color}15`, border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <s.icon size={22} color={s.color} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: s.change.startsWith('+') ? '#10b981' : '#ef4444', fontSize: '0.75rem', fontWeight: 700 }}>
-                {s.change.startsWith('+') ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: s.change.startsWith('+') ? '#10b981' : s.change.startsWith('-') ? '#ef4444' : '#64748b', fontSize: '0.75rem', fontWeight: 700 }}>
+                {s.change.includes('%') && (s.change.startsWith('+') ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />)}
                 {s.change}
               </div>
             </div>
@@ -108,7 +136,7 @@ export default function AdminDashboard() {
             ].map((ev, i) => (
               <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                 <div style={{ 
-                  width: '8px', height: '8px', borderRadius: '50%', marginTop: '5px',
+                   width: '8px', height: '8px', borderRadius: '50%', marginTop: '5px',
                   background: ev.type === 'error' ? '#ef4444' : ev.type === 'warning' ? '#f59e0b' : '#10b981' 
                 }} />
                 <div>
