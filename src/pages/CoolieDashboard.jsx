@@ -23,7 +23,7 @@ export default function CoolieDashboard() {
 
   const fetchBookings = async () => {
     try {
-      const res = await axios.get(`${config.apiBaseUrl}/bookings/coolie-bookings`, { withCredentials: true });
+      const res = await axios.get(`${config.apiBaseUrl}/bookings/coolie-tasks`, { withCredentials: true });
       setBookings(res.data.bookings);
     } catch (err) {
       console.error('Fetch coolie bookings error:', err);
@@ -137,7 +137,8 @@ export default function CoolieDashboard() {
                       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '1rem' }}>
                         <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: '0.65rem', color: '#475569', textTransform: 'uppercase' }}>Train</span><span style={{ fontWeight: 700 }}>{b.train_number || 'N/A'}</span></div>
                         <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: '0.65rem', color: '#475569', textTransform: 'uppercase' }}>Platform</span><span style={{ fontWeight: 700 }}>{b.platform}</span></div>
-                        <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: '0.65rem', color: '#475569', textTransform: 'uppercase' }}>Luggage</span><span style={{ fontWeight: 700 }}>{b.luggage_type}</span></div>
+                        <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: '0.65rem', color: '#475569', textTransform: 'uppercase' }}>Luggage</span><span style={{ fontWeight: 700 }}>{b.luggage_type || b.luggageType}</span></div>
+                        <div style={{ flex: 1 }}><span style={{ display: 'block', fontSize: '0.65rem', color: '#f97316', textTransform: 'uppercase' }}>Fare</span><span style={{ fontWeight: 800, color: '#f97316' }}>₹{b.total_fare ?? b.totalFare ?? 0}</span></div>
                       </div>
                       
                       <div style={{ display: 'flex', gap: '1rem' }}>
@@ -168,7 +169,7 @@ export default function CoolieDashboard() {
                         </div>
                         <div>
                           <div style={{ fontWeight: 700 }}>{b.station} • Platform {b.platform}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{b.user_name} • {b.luggage_type}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{b.user_name} • {b.luggage_type || b.luggageType} • <span style={{ color: '#10b981', fontWeight: 700 }}>₹{b.total_fare ?? b.totalFare ?? 0}</span></div>
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.75rem' }}>

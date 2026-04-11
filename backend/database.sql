@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   time TIME NOT NULL,
   passengers INTEGER DEFAULT 1,
   notes TEXT,
+  total_fare INTEGER,
   status VARCHAR(50) DEFAULT 'pending', -- pending, accepted, rejected, completed
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -139,6 +139,11 @@ export default function Dashboard() {
                         <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Assigned Partner • {activeBooking.coolie_phone}</div>
                       </div>
                     </div>
+
+                    <div style={{ marginTop: '1.5rem', background: 'rgba(249,115,22,0.1)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(249,115,22,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f97316', textTransform: 'uppercase' }}>Expected Fare</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc' }}>₹{activeBooking.total_fare ?? activeBooking.totalFare ?? 0}</span>
+                    </div>
                   </div>
                 ) : (
                   <div style={{ background: 'rgba(15,22,36,0.3)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '2rem', padding: '3rem', textAlign: 'center' }}>
@@ -166,7 +171,7 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{b.station}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.date} • {b.luggage_type}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.date} • {b.luggage_type || b.luggageType} • ₹{b.total_fare ?? b.totalFare ?? 0}</div>
                         </div>
                       </div>
                       <StatusBadge status={b.status} />

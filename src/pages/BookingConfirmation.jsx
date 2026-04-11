@@ -92,7 +92,8 @@ export default function BookingConfirmation() {
                 ['Platform', `Platform ${latest.platform || 'N/A'}`],
                 ['Date',     latest.date     || 'N/A'],
                 ['Time',     latest.time     || 'N/A'],
-                ['Luggage',  latest.luggageType || 'N/A'],
+                ['Luggage',  latest.luggage_type || latest.luggageType || 'N/A'],
+                ['Fare',     `₹${latest.total_fare ?? latest.totalFare ?? 0}`],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm">
                   <span className="font-body text-gray-500">{k}</span>

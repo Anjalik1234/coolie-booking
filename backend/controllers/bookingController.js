@@ -3,15 +3,15 @@ const db = require('../config/db');
 // @desc    Create a new booking
 // @route   POST /api/bookings
 exports.createBooking = async (req, res) => {
-  const { station, trainNumber, platform, luggageType, date, time, passengers, notes, coolieId } = req.body;
+  const { station, trainNumber, platform, luggageType, date, time, passengers, notes, coolieId, totalFare } = req.body;
   const userId = req.user.id; // From protect middleware
 
   try {
     const result = await db.query(
-      `INSERT INTO bookings (user_id, coolie_id, station, train_number, platform, luggage_type, date, time, passengers, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO bookings (user_id, coolie_id, station, train_number, platform, luggage_type, date, time, passengers, notes, total_fare)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [userId, coolieId || null, station, trainNumber, platform, luggageType, date, time, passengers, notes]
+      [userId, coolieId || null, station, trainNumber, platform, luggageType, date, time, passengers, notes, totalFare]
     );
 
     res.status(201).json({

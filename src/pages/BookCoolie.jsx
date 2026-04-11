@@ -23,9 +23,9 @@ const STATIONS = [
 ];
 
 const LUGGAGE_TYPES = [
-  { id: 'light',  label: 'Light Load',  desc: '1–2 small bags',          icon: Package,  price: 50,  color: '#10b981' },
-  { id: 'medium', label: 'Medium Duty', desc: '3–4 bags / suitcases',    icon: Luggage,  price: 100, color: '#f59e0b' },
-  { id: 'heavy',  label: 'Heavy Haul',  desc: '5+ bags / trolley needed', icon: Package,  price: 150, color: '#f97316' },
+  { id: 'small',  label: 'Small Bag',     desc: 'Handbags or small packs', icon: Package,  price: 30,  color: '#10b981' },
+  { id: 'heavy',  label: 'Heavy Bag',     desc: 'Standard heavy luggage',  icon: Package,  price: 60,  color: '#f59e0b' },
+  { id: 'large',  label: 'Suitcase/Box',  desc: 'Large items & Cartons',   icon: Luggage,  price: 100, color: '#f97316' },
 ];
 
 const STEPS = [
@@ -66,7 +66,7 @@ export default function BookCoolie() {
     station: '', 
     trainNumber: '', 
     platform: '', 
-    luggageType: '', 
+    luggageQuantities: { small: 0, heavy: 0, large: 0 }, 
     date: null, 
     time: null, 
     passengers: 1, 
@@ -78,7 +78,7 @@ export default function BookCoolie() {
 
   const canProceed = [
     form.station && form.platform,
-    form.luggageType,
+    Object.values(form.luggageQuantities).some(q => q > 0),
     form.date && form.time,
     true,
   ][step];
@@ -96,8 +96,17 @@ export default function BookCoolie() {
     }
     setLoading(true);
     try {
+      const luggageSummary = Object.entries(form.luggageQuantities)
+        .filter(([_, q]) => q > 0)
+        .map(([k, q]) => `${q} ${k.charAt(0).toUpperCase() + k.slice(1)}`)
+        .join(', ');
+
+      const totalFare = LUGGAGE_TYPES.reduce((acc, lt) => acc + (form.luggageQuantities[lt.id] || 0) * lt.price, 0);
+
       const res = await axios.post(`${config.apiBaseUrl}/bookings`, {
         ...form,
+        luggageType: luggageSummary,
+        totalFare,
         date: form.date?.toISOString().split('T')[0],
         time: form.time?.toLocaleTimeString([], { hour12: false })
       }, {
@@ -179,24 +188,34 @@ export default function BookCoolie() {
     <div key="1" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {LUGGAGE_TYPES.map((lt) => {
         const LIcon = lt.icon;
+        const q = form.luggageQuantities[lt.id] || 0;
         return (
-          <SelectableCard key={lt.id} selected={form.luggageType === lt.id} onClick={() => update('luggageType', lt.id)}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '48px', height: '48px', background: `${lt.color}15`, border: `1px solid ${lt.color}35`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <LIcon size={22} color={lt.color} />
-                </div>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: '#f8fafc', fontSize: '1.1rem' }}>{lt.label}</div>
-                  <div style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.85rem' }}>{lt.desc}</div>
-                </div>
+          <div key={lt.id} style={{
+            background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '1.25rem', padding: '1rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '48px', height: '48px', background: `${lt.color}15`, border: `1px solid ${lt.color}35`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LIcon size={22} color={lt.color} />
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: lt.color, fontSize: '1.5rem' }}>₹{lt.price}</div>
-                <div style={{ fontFamily: 'var(--font-body)', color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Base Rate</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: '#f8fafc', fontSize: '1rem' }}>{lt.label}</div>
+                <div style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.75rem' }}>₹{lt.price} each</div>
               </div>
             </div>
-          </SelectableCard>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(15, 23, 42, 0.8)', padding: '0.25rem', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <button 
+                onClick={() => update('luggageQuantities', { ...form.luggageQuantities, [lt.id]: Math.max(0, q - 1) })}
+                style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', border: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}
+              >–</button>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: q > 0 ? '#f97316' : '#64748b', minWidth: '1.5rem', textAlign: 'center' }}>{q}</span>
+              <button 
+                onClick={() => update('luggageQuantities', { ...form.luggageQuantities, [lt.id]: q + 1 })}
+                style={{ width: '2rem', height: '2rem', borderRadius: '0.5rem', border: 'none', background: 'rgba(249,115,22,0.2)', color: '#f97316', cursor: 'pointer' }}
+              >+</button>
+            </div>
+          </div>
         );
       })}
     </div>,
@@ -251,7 +270,15 @@ export default function BookCoolie() {
       <div style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '1.5rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {[
           { icon: Train,     label: 'Train / Platform',    value: `${form.trainNumber || 'TBD'} — ${form.platform || 'TBD'}`, color: '#f97316' },
-          { icon: Luggage,   label: 'Luggage Class',    value: LUGGAGE_TYPES.find(l => l.id === form.luggageType)?.label || '—', color: '#f59e0b' },
+          { 
+            icon: Luggage,   
+            label: 'Luggage Breakdown',    
+            value: Object.entries(form.luggageQuantities)
+              .filter(([_, q]) => q > 0)
+              .map(([k, q]) => `${q} ${LUGGAGE_TYPES.find(l => l.id === k)?.label}`)
+              .join(', ') || 'No bags selected', 
+            color: '#f59e0b' 
+          },
           { icon: Clock,     label: 'Schedule Slot',   value: form.date && form.time ? `${form.date.toLocaleDateString()} at ${form.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : '—', color: '#10b981' },
           { icon: Users,     label: 'Passengers', value: `${form.passengers} passenger${form.passengers > 1 ? 's' : ''}`, color: '#6366f1' },
         ].map(({ icon: Icon, label, value, color }) => (
@@ -280,7 +307,7 @@ export default function BookCoolie() {
           </div>
         </div>
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '2.5rem', color: '#f8fafc', textShadow: '0 4px 20px rgba(249,115,22,0.5)' }}>
-          ₹{(LUGGAGE_TYPES.find(l => l.id === form.luggageType)?.price || 0) * form.passengers}
+          ₹{LUGGAGE_TYPES.reduce((acc, lt) => acc + (form.luggageQuantities[lt.id] || 0) * lt.price, 0)}
         </div>
       </div>
     </div>,
