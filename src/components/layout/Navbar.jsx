@@ -103,17 +103,24 @@ export default function Navbar() {
 
             {/* ── Desktop Nav Links (always visible) ── */}
             <nav style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }} aria-label="Main navigation">
-              {navLinks.map(({ label, to, icon: Icon }) => (
-                <Link key={to} to={to} style={linkStyle(isActive(to))}
-                  onMouseEnter={(e) => { if (!isActive(to)) { e.currentTarget.style.color = '#f1f5fd'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; } }}
-                  onMouseLeave={(e) => { if (!isActive(to)) { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; } }}
-                >
-                  <Icon size={14} />
-                  <span style={{
-                    /* Hide label text on very small screens, show icon only */
-                  }}>{label}</span>
-                </Link>
-              ))}
+              {navLinks.filter(link => {
+                if (!user) return ['/', '/coolies'].includes(link.to);
+                if (user.role === 'coolie') return ['/', '/coolies', '/coolie-dashboard'].includes(link.to);
+                return ['/', '/book', '/coolies', '/dashboard'].includes(link.to);
+              }).map(({ label, to, icon: Icon }) => {
+                const finalTo = (user?.role === 'coolie' && to === '/dashboard') ? '/coolie-dashboard' : to;
+                const finalLabel = (user?.role === 'coolie' && label === 'Dashboard') ? 'My Tasks' : label;
+                
+                return (
+                  <Link key={to} to={finalTo} style={linkStyle(isActive(finalTo))}
+                    onMouseEnter={(e) => { if (!isActive(finalTo)) { e.currentTarget.style.color = '#f1f5fd'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; } }}
+                    onMouseLeave={(e) => { if (!isActive(finalTo)) { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; } }}
+                  >
+                    <Icon size={14} />
+                    <span>{finalLabel}</span>
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* ── Auth Buttons ── */}

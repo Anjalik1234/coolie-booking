@@ -52,7 +52,8 @@ export default function Register() {
         backdrop: 'rgba(0,0,0,0.8)'
       });
       
-      navigate('/dashboard');
+      const targetPath = res.data.user.role === 'coolie' ? '/coolie-dashboard' : '/dashboard';
+      navigate(targetPath);
     } catch (err) {
       Swal.fire({
         icon: 'error',
