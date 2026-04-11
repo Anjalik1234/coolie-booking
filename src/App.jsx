@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import LoadingScreen from './components/ui/LoadingScreen';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import './App.css';
 
 // Lazy-load all pages for code splitting
@@ -25,6 +26,7 @@ const AdminLogin          = lazy(() => import('./pages/AdminLogin'));
 const AdminDashboard      = lazy(() => import('./pages/AdminDashboard'));
 const AdminCoolieRequests = lazy(() => import('./pages/AdminCoolieRequests'));
 const AdminCoolieList     = lazy(() => import('./pages/AdminCoolieList'));
+const AdminSettings       = lazy(() => import('./pages/AdminSettings'));
 
 // AnimatePresence needs location inside Router
 function AnimatedRoutes() {
@@ -42,12 +44,38 @@ function AnimatedRoutes() {
             <Route path="/"                   element={<Home />} />
             <Route path="/login"              element={<Login />} />
             <Route path="/register"           element={<Register />} />
-            <Route path="/dashboard"          element={<Dashboard />} />
-            <Route path="/coolie-dashboard"   element={<CoolieDashboard />} />
-            <Route path="/book"               element={<BookCoolie />} />
-            <Route path="/coolies"            element={<CoolieListing />} />
-            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/coolie-register"    element={<CoolieRegister />} />
+            
+            {/* Passenger Only Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute allowedRoles={['passenger']}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/book" element={
+              <ProtectedRoute allowedRoles={['passenger']}>
+                <BookCoolie />
+              </ProtectedRoute>
+            } />
+            <Route path="/booking-confirmation" element={
+              <ProtectedRoute allowedRoles={['passenger']}>
+                <BookingConfirmation />
+              </ProtectedRoute>
+            } />
+
+            {/* Coolie Only Routes */}
+            <Route path="/coolie-dashboard" element={
+              <ProtectedRoute allowedRoles={['coolie']}>
+                <CoolieDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Shared Protected Routes */}
+            <Route path="/coolies" element={
+              <ProtectedRoute allowedRoles={['passenger', 'coolie']}>
+                <CoolieListing />
+              </ProtectedRoute>
+            } />
           </Route>
 
           {/* Admin Portal (Isolated) */}
@@ -56,6 +84,7 @@ function AnimatedRoutes() {
             <Route path="dashboard"         element={<AdminDashboard />} />
             <Route path="coolie-requests"   element={<AdminCoolieRequests />} />
             <Route path="coolie-list"       element={<AdminCoolieList />} />
+            <Route path="settings"          element={<AdminSettings />} />
             <Route index                    element={<AdminDashboard />} />
           </Route>
         </Routes>

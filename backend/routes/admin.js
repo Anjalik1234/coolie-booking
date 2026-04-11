@@ -15,4 +15,9 @@ router.get('/coolie-requests', protectAdmin, adminController.getPendingCoolieReq
 router.patch('/coolie-requests/:id', protectAdmin, adminController.updateCoolieStatus);
 router.get('/coolies', protectAdmin, adminController.getAllCoolies);
 
+// Settings
+router.patch('/profile', protectAdmin, adminController.updateAdminProfile);
+router.patch('/password', protectAdmin, adminController.updateAdminPassword);
+router.get('/stats', protectAdmin, adminController.getAdminDashboardStats);
+
 module.exports = router;

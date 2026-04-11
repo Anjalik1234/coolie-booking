@@ -129,3 +129,80 @@ exports.getAllCoolies = async (req, res) => {
     res.status(500).json({ message: 'Error fetching coolie registry.' });
   }
 };
+
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    const adminId = req.admin.id;
+
+    if (!username || !email) {
+      return res.status(400).json({ message: 'Username and email are required.' });
+    }
+
+    const result = await db.query(
+      'UPDATE admins SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email',
+      [username, email, adminId]
+    );
+
+    res.json({ success: true, message: 'Profile updated successfully', admin: result.rows[0] });
+  } catch (error) {
+    console.error('Admin profile update error:', error);
+    if (error.code === '23505') {
+       return res.status(400).json({ message: 'Email or username already in use.' });
+    }
+    res.status(500).json({ message: 'Server error updating profile.' });
+  }
+};
+
+exports.updateAdminPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const adminId = req.admin.id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Both current and new passwords are required.' });
+    }
+
+    // 1. Get current password hash
+    const adminRes = await db.query('SELECT password_hash FROM admins WHERE id = $1', [adminId]);
+    const isMatch = await bcrypt.compare(currentPassword, adminRes.rows[0].password_hash);
+    
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Incorrect current password.' });
+    }
+
+    // 2. Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const newHash = await bcrypt.hash(newPassword, salt);
+
+    // 3. Update
+    await db.query('UPDATE admins SET password_hash = $1 WHERE id = $2', [newHash, adminId]);
+
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Admin password update error:', error);
+    res.status(500).json({ message: 'Server error changing password.' });
+  }
+};
+
+exports.getAdminDashboardStats = async (req, res) => {
+  try {
+    const cooliesRes = await db.query('SELECT count(*) FROM coolies WHERE is_approved = true');
+    const passengersRes = await db.query('SELECT count(*) FROM users');
+    const pendingRes = await db.query('SELECT count(*) FROM coolies WHERE is_approved = false');
+    const revenueRes = await db.query("SELECT sum(total_fare) FROM bookings WHERE status = 'completed'");
+
+    res.json({
+      success: true,
+      stats: {
+        totalCoolies: parseInt(cooliesRes.rows[0].count),
+        totalPassengers: parseInt(passengersRes.rows[0].count),
+        pendingApprovals: parseInt(pendingRes.rows[0].count),
+        totalRevenue: parseFloat(revenueRes.rows[0].sum || 0)
+      }
+    });
+  } catch (error) {
+    console.error('Admin dashboard stats error:', error);
+    res.status(500).json({ message: 'Error fetching dashboard analytics.' });
+  }
+};
