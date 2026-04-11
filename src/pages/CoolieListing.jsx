@@ -7,13 +7,16 @@ import PageTransition from '../components/ui/PageTransition';
 import TrainTrack from '../components/ui/TrainTrack';
 import axios from 'axios';
 import config from '../config/env';
+import useStore from '../store/useStore';
 
 const HERO_IMG = "/assets/train.jpg";
 
 function CoolieCard({ coolie, delay }) {
+  const { user } = useStore();
   const BadgeIcon = Award; // Default for now
-  const available = true; // Default for real users
-  const statusColor = '#10b981';
+  const available = coolie.status === 'available';
+  const statusColor = available ? '#10b981' : '#f59e0b';
+  const statusText = available ? 'Available' : 'Busy';
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -47,7 +50,7 @@ function CoolieCard({ coolie, delay }) {
             animate={{ opacity: [1, 0.3, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           />
-          Active
+          {statusText}
         </div>
         {/* Badge */}
         <div style={{
@@ -89,15 +92,17 @@ function CoolieCard({ coolie, delay }) {
             {coolie.trips.toLocaleString()} trips
           </span>
         </div>
-
-        <Link to="/book" state={{ coolieId: coolie.id, coolieName: `${coolie.first_name} ${coolie.last_name}` }} style={{ textDecoration: 'none', display: 'block' }}>
-          <AnimatedButton
-            variant="primary"
-            style={{ width: '100%', padding: '0.7rem', fontSize: '0.875rem' }}
-          >
-            Book Now
-          </AnimatedButton>
-        </Link>
+        
+        {user?.role !== 'coolie' && (
+          <Link to="/book" state={{ coolieId: coolie.id, coolieName: `${coolie.first_name} ${coolie.last_name}` }} style={{ textDecoration: 'none', display: 'block' }}>
+            <AnimatedButton
+              variant="primary"
+              style={{ width: '100%', padding: '0.7rem', fontSize: '0.875rem' }}
+            >
+              Book Now
+            </AnimatedButton>
+          </Link>
+        )}
       </div>
     </motion.div>
   );
@@ -128,9 +133,14 @@ export default function CoolieListing() {
       const fullName = `${c.first_name} ${c.last_name}`.toLowerCase();
       const matchSearch = fullName.includes(search.toLowerCase()) ||
                           c.city.toLowerCase().includes(search.toLowerCase());
-      return matchSearch;
+      
+      const matchFilter = filter === 'all' || 
+                         (filter === 'available' && c.status === 'available') ||
+                         (filter === 'unavailable' && c.status === 'busy');
+                         
+      return matchSearch && matchFilter;
     }),
-  [search, coolies]);
+  [search, filter, coolies]);
 
   return (
     <PageTransition>

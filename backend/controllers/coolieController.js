@@ -83,7 +83,13 @@ exports.registerCoolie = async (req, res) => {
 exports.getApprovedCoolies = async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT id, first_name, last_name, email, age, city, avatar_url FROM coolies WHERE is_approved = TRUE'
+      `SELECT c.id, c.first_name, c.last_name, c.email, c.age, c.city, c.avatar_url,
+              CASE 
+                WHEN EXISTS (SELECT 1 FROM bookings b WHERE b.coolie_id = c.id AND b.status IN ('accepted', 'pending')) THEN 'busy'
+                ELSE 'available'
+              END as status
+       FROM coolies c
+       WHERE c.is_approved = TRUE`
     );
     res.json({ success: true, coolies: result.rows });
   } catch (error) {

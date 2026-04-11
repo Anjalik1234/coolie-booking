@@ -1,6 +1,9 @@
-import { useRef, Suspense, lazy } from 'react';
+import { useRef, Suspense, lazy, useState, useEffect } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import config from '../config/env';
+import useStore from '../store/useStore';
 import {
   ArrowRight, Clock, Shield, Users, Star, Train, MapPin,
   CheckCircle, TrendingUp, Award, Zap, ChevronRight, Phone,
@@ -99,6 +102,25 @@ export default function Home() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  const { user } = useStore();
+  const [activeCoolies, setActiveCoolies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCoolies = async () => {
+      try {
+        const res = await axios.get(`${config.apiBaseUrl}/coolies/approved`);
+        // Show only first 3 for home page layout
+        setActiveCoolies(res.data.coolies.slice(0, 3));
+      } catch (err) {
+        console.error('Error fetching coolies for home page:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCoolies();
+  }, []);
 
   return (
     <PageTransition>
@@ -468,75 +490,99 @@ export default function Home() {
           </FadeIn>
 
           <div style={{ display: 'grid', gap: '1.5rem' }} className="md:grid-cols-3">
-            {coolies.map((c, i) => (
-              <motion.div key={c.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                whileHover={{ y: -8, boxShadow: '0 20px 50px rgba(249,115,22,0.2)' }}
-                style={{
-                  background: 'rgba(15,22,36,0.9)',
-                  border: '1px solid rgba(249,115,22,0.15)',
-                  borderRadius: '1.5rem', overflow: 'hidden',
-                  transition: 'all 0.35s',
-                }}
-              >
-                {/* Cover image */}
-                <div style={{ height: '200px', overflow: 'hidden', position: 'relative' }}>
-                  <img src={c.img} alt={c.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', transition: 'transform 0.5s' }}
-                    onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-                    onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                  />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,22,36,0.9) 0%, transparent 60%)' }} />
-                  <div style={{
-                    position: 'absolute', top: '0.875rem', right: '0.875rem',
-                    background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)',
-                    borderRadius: '999px', padding: '0.25rem 0.625rem',
-                    display: 'flex', alignItems: 'center', gap: '0.35rem',
-                    fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: '#34d399', fontWeight: 700,
-                  }}>
-                    <motion.span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}
-                      animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
-                    />
-                    Active
-                  </div>
-                </div>
-                {/* Card body */}
-                <div style={{ padding: '1.25rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#f1f5fd', fontSize: '1.15rem' }}>{c.name}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Star size={13} color="#fcd34d" style={{ fill: '#fcd34d' }} />
-                      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#f1f5fd', fontSize: '0.9rem' }}>{c.rating}</span>
+            {loading ? (
+              // Simple loading skeletons/placeholders
+              [1, 2, 3].map((n) => (
+                <div key={n} style={{ height: '380px', background: 'rgba(15,22,36,0.5)', borderRadius: '1.5rem', animation: 'pulse 2s infinite' }} />
+              ))
+            ) : activeCoolies.length > 0 ? (
+              activeCoolies.map((c, i) => {
+                const fullName = `${c.first_name} ${c.last_name}`;
+                const coolieImg = config.getImageUrl(c.avatar_url);
+                
+                return (
+                  <motion.div key={c.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.12 }}
+                    whileHover={{ y: -8, boxShadow: '0 20px 50px rgba(249,115,22,0.2)' }}
+                    style={{
+                      background: 'rgba(15,22,36,0.9)',
+                      border: '1px solid rgba(249,115,22,0.15)',
+                      borderRadius: '1.5rem', overflow: 'hidden',
+                      transition: 'all 0.35s',
+                    }}
+                  >
+                    {/* Cover image */}
+                    <div style={{ height: '200px', overflow: 'hidden', position: 'relative' }}>
+                      <img src={coolieImg} alt={fullName}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', transition: 'transform 0.5s' }}
+                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                      />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,22,36,0.9) 0%, transparent 60%)' }} />
+                      <div style={{
+                        position: 'absolute', top: '0.875rem', right: '0.875rem',
+                        background: c.status === 'available' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', 
+                        border: c.status === 'available' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(245,158,11,0.3)',
+                        borderRadius: '999px', padding: '0.25rem 0.625rem',
+                        display: 'flex', alignItems: 'center', gap: '0.35rem',
+                        fontSize: '0.7rem', fontFamily: 'var(--font-mono)', 
+                        color: c.status === 'available' ? '#34d399' : '#fcd34d', fontWeight: 700,
+                      }}>
+                        <motion.span style={{ 
+                          width: '6px', height: '6px', borderRadius: '50%', 
+                          background: c.status === 'available' ? '#34d399' : '#fcd34d', 
+                          display: 'inline-block' 
+                        }}
+                          animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+                        />
+                        {c.status === 'available' ? 'Available' : 'Busy'}
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
-                    <MapPin size={13} color="#94a3b8" />
-                    <span style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.82rem' }}>{c.station}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{
-                      background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)',
-                      borderRadius: '999px', padding: '0.25rem 0.75rem',
-                      fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#fb923c',
-                      display: 'flex', alignItems: 'center', gap: '0.375rem',
-                    }}>
-                      <Luggage size={11} /> {c.speciality}
+                    {/* Card body */}
+                    <div style={{ padding: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#f1f5fd', fontSize: '1.15rem' }}>{fullName}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Star size={13} color="#fcd34d" style={{ fill: '#fcd34d' }} />
+                          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: '#f1f5fd', fontSize: '0.9rem' }}>4.8</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
+                        <MapPin size={13} color="#94a3b8" />
+                        <span style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.82rem' }}>{c.city}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{
+                          background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)',
+                          borderRadius: '999px', padding: '0.25rem 0.75rem',
+                          fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: '#fb923c',
+                          display: 'flex', alignItems: 'center', gap: '0.375rem',
+                        }}>
+                          <Luggage size={11} /> Verified Partner
+                        </div>
+                        <span style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.78rem' }}>
+                          Featured
+                        </span>
+                      </div>
+                      {user?.role !== 'coolie' && (
+                        <Link to="/book" state={{ coolieId: c.id, coolieName: fullName }} style={{ textDecoration: 'none', display: 'block', marginTop: '1rem' }}>
+                          <AnimatedButton variant="primary" style={{ width: '100%', padding: '0.7rem', fontSize: '0.875rem' }}>
+                            Book Now
+                          </AnimatedButton>
+                        </Link>
+                      )}
                     </div>
-                    <span style={{ fontFamily: 'var(--font-body)', color: '#94a3b8', fontSize: '0.78rem' }}>
-                      {c.trips.toLocaleString()} trips
-                    </span>
-                  </div>
-                  <Link to="/book" style={{ textDecoration: 'none', display: 'block', marginTop: '1rem' }}>
-                    <AnimatedButton variant="primary" style={{ width: '100%', padding: '0.7rem', fontSize: '0.875rem' }}>
-                      Book Now
-                    </AnimatedButton>
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '3rem', background: 'rgba(15,22,36,0.5)', borderRadius: '1.5rem', border: '1px dashed rgba(249,115,22,0.2)' }}>
+                <p style={{ color: '#94a3b8', fontFamily: 'var(--font-body)' }}>Our partners are currently being verified. Check back soon!</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
