@@ -75,5 +75,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   notes TEXT,
   total_fare INTEGER,
   status VARCHAR(50) DEFAULT 'pending', -- pending, accepted, rejected, completed
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  feedback TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

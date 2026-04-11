@@ -18,6 +18,7 @@ const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0, tr
 export default function CoolieDashboard() {
   const { user, isAuthenticated } = useStore();
   const [bookings, setBookings] = useState([]);
+  const [stats, setStats] = useState({ todayEarnings: 0, avgRating: '0.0', tripsThisWeek: 0, cancellationRate: 0 });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -32,6 +33,15 @@ export default function CoolieDashboard() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const res = await axios.get(`${config.apiBaseUrl}/bookings/coolie-stats`, { withCredentials: true });
+      setStats(res.data.stats);
+    } catch (err) {
+      console.error('Fetch coolie stats error:', err);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -42,6 +52,7 @@ export default function CoolieDashboard() {
       return;
     }
     fetchBookings();
+    fetchStats();
   }, [isAuthenticated, navigate, user]);
 
   const updateStatus = async (id, status) => {
@@ -99,9 +110,9 @@ export default function CoolieDashboard() {
               {/* Stats Bar */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
                 {[
-                  { label: 'Today Earnings', value: '₹1,250', icon: Wallet, color: '#10b981' },
+                  { label: 'Today Earnings', value: `₹${stats.todayEarnings.toLocaleString()}`, icon: Wallet, color: '#10b981' },
                   { label: 'Active Trips', value: active.length, icon: Train, color: '#3b82f6' },
-                  { label: 'Rating', value: '4.9', icon: Star, color: '#fcd34d' },
+                  { label: 'Rating', value: stats.avgRating, icon: Star, color: '#fcd34d' },
                 ].map(s => (
                   <div key={s.label} style={{ background: 'rgba(15,22,36,0.5)', border: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -203,8 +214,8 @@ export default function CoolieDashboard() {
                <div style={{ background: 'rgba(15,22,36,0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '1.5rem', padding: '1.5rem' }}>
                   <h4 style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '1.25rem' }}>Service Summary</h4>
                   {[
-                    { label: 'Trips this week', value: '24' },
-                    { label: 'Cancellation rate', value: '2%' },
+                    { label: 'Trips this week', value: stats.tripsThisWeek },
+                    { label: 'Cancellation rate', value: `${stats.cancellationRate}%` },
                     { label: 'On-time arrival', value: '98%' },
                   ].map(item => (
                     <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.85rem' }}>

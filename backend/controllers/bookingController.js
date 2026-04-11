@@ -94,3 +94,86 @@ exports.updateBookingStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error updating status' });
   }
 };
+
+// @desc    Rate a booking
+// @route   POST /api/bookings/:id/rate
+exports.rateBooking = async (req, res) => {
+  const { id } = req.params;
+  const { rating, feedback } = req.body;
+  const userId = req.user.id;
+
+  try {
+    // Ensure the booking is completed and belongs to the user
+    const check = await db.query('SELECT * FROM bookings WHERE id = $1 AND user_id = $2', [id, userId]);
+    if (check.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to rate this booking' });
+    }
+    if (check.rows[0].status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Only completed bookings can be rated' });
+    }
+
+    const result = await db.query(
+      'UPDATE bookings SET rating = $1, feedback = $2 WHERE id = $3 RETURNING *',
+      [rating, feedback, id]
+    );
+
+    res.json({ success: true, booking: result.rows[0] });
+  } catch (err) {
+    console.error('Rate booking error:', err);
+    res.status(500).json({ success: false, message: 'Server error while rating' });
+  }
+};
+
+// @desc    Get coolie stats for dashboard
+// @route   GET /api/bookings/coolie-stats
+exports.getCoolieStats = async (req, res) => {
+  const coolieId = req.user.id;
+
+  try {
+    // 1. Today's Earnings
+    const earningsRes = await db.query(
+      `SELECT SUM(total_fare) as earnings FROM bookings 
+       WHERE coolie_id = $1 AND status = 'completed' 
+       AND created_at >= CURRENT_DATE`,
+      [coolieId]
+    );
+
+    // 2. Average Rating
+    const ratingRes = await db.query(
+      `SELECT AVG(rating) as avg_rating FROM bookings 
+       WHERE coolie_id = $1 AND rating IS NOT NULL`,
+      [coolieId]
+    );
+
+    // 3. Trips this week
+    const weeklyTripsRes = await db.query(
+      `SELECT COUNT(*) as trips FROM bookings 
+       WHERE coolie_id = $1 AND status = 'completed' 
+       AND created_at >= NOW() - INTERVAL '7 days'`,
+      [coolieId]
+    );
+
+    // 4. Cancellation Rate (Rejected vs Total assigned)
+    const cancelRes = await db.query(
+      `SELECT 
+        COUNT(*) FILTER (WHERE status = 'rejected') as rejected,
+        COUNT(*) as total
+       FROM bookings WHERE coolie_id = $1`,
+      [coolieId]
+    );
+
+    const stats = {
+      todayEarnings: parseInt(earningsRes.rows[0].earnings || 0),
+      avgRating: parseFloat(ratingRes.rows[0].avg_rating || 0).toFixed(1),
+      tripsThisWeek: parseInt(weeklyTripsRes.rows[0].trips || 0),
+      cancellationRate: cancelRes.rows[0].total > 0 
+        ? Math.round((cancelRes.rows[0].rejected / cancelRes.rows[0].total) * 100) 
+        : 0
+    };
+
+    res.json({ success: true, stats });
+  } catch (err) {
+    console.error('Get coolie stats error:', err);
+    res.status(500).json({ success: false, message: 'Server error fetching stats' });
+  }
+};

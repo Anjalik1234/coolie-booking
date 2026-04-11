@@ -11,6 +11,8 @@ import StatusBadge from '../components/ui/StatusBadge';
 import AnimatedButton from '../components/ui/AnimatedButton';
 import PageTransition from '../components/ui/PageTransition';
 import config from '../config/env';
+import Swal from 'sweetalert2';
+import RatingModal from '../components/ui/RatingModal';
 
 const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
@@ -44,30 +46,54 @@ export default function Dashboard() {
   const { user, setBookings, isAuthenticated } = useStore();
   const [localBookings, setLocalBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ratingBooking, setRatingBooking] = useState(null);
   const navigate = useNavigate();
+
+  const fetchBookings = async () => {
+    try {
+      const res = await axios.get(`${config.apiBaseUrl}/bookings/my-bookings`, { withCredentials: true });
+      setLocalBookings(res.data.bookings);
+      setBookings(res.data.bookings);
+    } catch (err) {
+      console.error('Fetch bookings error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRate = async (data) => {
+    try {
+      await axios.post(`${config.apiBaseUrl}/bookings/${ratingBooking.id}/rate`, data, { withCredentials: true });
+      await Swal.fire({
+        icon: 'success',
+        title: 'Thank You!',
+        text: 'Your feedback helps our partners improve.',
+        background: '#1e293b',
+        color: '#fff',
+        confirmButtonColor: '#f97316'
+      });
+      setRatingBooking(null);
+      fetchBookings();
+    } catch (err) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Submission Failed', 
+        text: err.response?.data?.message || 'Error submitting rating',
+        background: '#1e293b',
+        color: '#fff'
+      });
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    // If user is a coolie, they belong on the coolie dashboard
     if (user?.role === 'coolie') {
       navigate('/coolie-dashboard');
       return;
     }
-
-    const fetchBookings = async () => {
-      try {
-        const res = await axios.get(`${config.apiBaseUrl}/bookings/my-bookings`, { withCredentials: true });
-        setLocalBookings(res.data.bookings);
-        setBookings(res.data.bookings);
-      } catch (err) {
-        console.error('Fetch bookings error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBookings();
   }, [isAuthenticated, navigate, user, setBookings]);
 
@@ -105,13 +131,9 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Main Layout Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '2.5rem' }}>
             
-            {/* Left Column: Active & History */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-              
-              {/* Highlight Card: Next Journey */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                 <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Clock size={16} color="#f97316" />
@@ -142,7 +164,7 @@ export default function Dashboard() {
 
                     <div style={{ marginTop: '1.5rem', background: 'rgba(249,115,22,0.1)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(249,115,22,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f97316', textTransform: 'uppercase' }}>Expected Fare</span>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc' }}>₹{activeBooking.total_fare ?? activeBooking.totalFare ?? 0}</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc' }}>₹{activeBooking.total_fare ?? 0}</span>
                     </div>
                   </div>
                 ) : (
@@ -155,11 +177,9 @@ export default function Dashboard() {
                 )}
               </motion.div>
 
-              {/* History List */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
                  <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Recent Activity</h3>
-                  <Link to="/coolies" style={{ fontSize: '0.8rem', color: '#f97316', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>View All <ChevronRight size={14} /></Link>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -171,13 +191,28 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{b.station}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.date} • {b.luggage_type || b.luggageType} • ₹{b.total_fare ?? b.totalFare ?? 0}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{b.date} • ₹{b.total_fare ?? 0}</div>
                         </div>
                       </div>
-                      <StatusBadge status={b.status} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <StatusBadge status={b.status} />
+                        {b.status === 'completed' && !b.rating && (
+                          <button 
+                            onClick={() => setRatingBooking(b)}
+                            style={{ padding: '0.4rem 0.8rem', background: 'rgba(252,211,77,0.1)', border: '1px solid #fcd34d', borderRadius: '8px', color: '#fcd34d', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
+                          >
+                            Rate Now
+                          </button>
+                        )}
+                        {b.rating && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: '#fcd34d' }}>
+                            <Star size={14} style={{ fill: '#fcd34d' }} />
+                            <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>{b.rating}</span>
+                          </div>
+                        )}
+                      </div>
                     </motion.div>
                   ))}
-                  
                   {localBookings.length === 0 && !loading && (
                     <div style={{ padding: '2rem', textAlign: 'center', color: '#475569', fontSize: '0.85rem' }}>No past bookings found.</div>
                   )}
@@ -185,20 +220,15 @@ export default function Dashboard() {
               </motion.div>
             </div>
 
-            {/* Right Column: Stats & Profile */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              
-              {/* Profile Card */}
               <div style={{ background: 'rgba(15,22,36,0.6)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '2rem', padding: '2rem', textAlign: 'center' }}>
                 <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1.25rem' }}>
                   <div style={{ width: '80px', height: '80px', background: 'linear-gradient(45deg, #f97316, #fb923c)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
                     <User size={36} color="white" />
                   </div>
-                  <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '24px', height: '24px', background: '#10b981', border: '3px solid #020617', borderRadius: '50%' }} />
                 </div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.25rem' }}>{user?.name}</h3>
                 <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Verified Passenger</p>
-                
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'rgba(255,255,255,0.05)', borderRadius: '1rem', overflow: 'hidden' }}>
                   <div style={{ padding: '1rem', background: 'rgba(15,22,36,0.6)' }}>
                     <div style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Trips</div>
@@ -210,25 +240,19 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-
-              {/* Mini Stats */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {stats.map((s, i) => <StatCard key={s.label} {...s} delay={0.5 + (i * 0.1)} />)}
               </div>
-
-              {/* Promo Card */}
-              <div style={{ background: 'linear-gradient(225deg, #f97316, #ea580c)', borderRadius: '1.5rem', padding: '1.5rem', color: 'white', position: 'relative', overflow: 'hidden' }}>
-                <Star size={60} style={{ position: 'absolute', top: '-10px', right: '-10px', opacity: 0.15 }} />
-                <h4 style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '0.5rem', position: 'relative', zIndex: 1 }}>Premium Pass</h4>
-                <p style={{ fontSize: '0.8rem', opacity: 0.9, marginBottom: '1rem', position: 'relative', zIndex: 1 }}>Get priority coolie assignment and zero cancellation fees.</p>
-                <div style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '0.75rem', padding: '0.5rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>Upgrade Now</div>
-              </div>
             </div>
-
           </div>
         </div>
-
       </div>
+      <RatingModal 
+        isOpen={!!ratingBooking} 
+        onClose={() => setRatingBooking(null)} 
+        onSubmit={handleRate}
+        booking={ratingBooking}
+      />
     </PageTransition>
   );
 }
