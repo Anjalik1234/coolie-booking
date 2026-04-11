@@ -1,16 +1,114 @@
-# React + Vite
+# 🚂 CoolieBook: Premium Railway Assistance
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**CoolieBook** is a state-of-the-art digital platform designed to modernize railway assistance services in India. By bridging the gap between passengers and verified coolies through an elegant, glassmorphism-inspired interface, we ensure that every journey begins and ends with comfort and transparency.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌟 Key Features
 
-## React Compiler
+### 👤 For Passengers
+- **Smart Booking**: Instant coolie reservation with precise train and platform details.
+- **Fare Transparency**: Pre-calculated booking costs based on luggage and distance.
+- **Verified Partners**: Full visibility into coolie profiles, including ratings and verified Aadhar status.
+- **Real-time Availability**: Filter and find partners who are currently available at your station.
+- **Feedback Loop**: Post-trip rating and feedback system to ensure premium service standards.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 💼 For Coolie Partners
+- **Analytics Dashboard**: Real-time tracking of daily earnings, average ratings, and weekly performance.
+- **Task Management**: Seamless acceptance and completion flow for assigned bookings.
+- **Digital Identity**: Professional profile hosting verified credentials and performance badges.
+- **Availability Toggle**: Automatic "Busy" status during active trips to manage work-life balance.
 
-## Expanding the ESLint configuration
+### 🛡️ Command Center (Admin)
+- **Aggregated Analytics**: High-level network metrics including total revenue, partner growth, and user volume.
+- **Onboarding Queue**: Secure administrative workflow for verifying and approving new partner applications.
+- **Account Security**: Dedicated settings for administrative profile and credential management.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: [React 18](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Backend**: [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **Authentication**: JWT (JSON Web Tokens) with HTTP-only Cookies
+- **UI/UX**: Custom Vanilla CSS (Premium Glassmorphism Design System)
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Asma-M06/coolie-booking.git
+cd coolie-booking
+```
+
+### 2. Configuration & Environment
+Create a `.env` file in the `backend/` directory:
+```env
+PORT=5005
+DATABASE_URL=your_postgresql_url
+JWT_SECRET=your_super_secret_key
+NODE_ENV=development
+```
+
+### 3. Database Initialization
+Ensure PostgreSQL is running, then execute the schema and initial migration:
+```bash
+cd backend
+psql $DATABASE_URL -f database.sql
+node migrate.js
+```
+
+### 4. Install Dependencies & Launch
+**Backend:**
+```bash
+cd backend
+npm install
+node index.js
+```
+
+**Frontend:**
+```bash
+cd ../
+npm install
+npm run dev
+```
+
+---
+
+## 📂 Project Structure
+
+```text
+├── backend/
+│   ├── config/          # Database & Server configuration
+│   ├── controllers/     # Business logic for Auth, Bookings, Admins
+│   ├── routes/          # API endpoint definitions
+│   ├── middleware/      # Auth & Security middlewares
+│   ├── database.sql     # Core PostgreSQL schema
+│   └── index.js         # Entry point
+├── src/
+│   ├── components/      # Reusable UI & Layout components
+│   ├── pages/           # Main application views (Passenger, Coolie, Admin)
+│   ├── store/           # Global state management (Zustand)
+│   ├── config/          # Frontend environment config
+│   └── App.jsx          # Root component & Routing
+└── README.md
+```
+
+---
+
+## 🔐 Administrative Access
+To access the restricted Command Center:
+1. Navigate to `/login` and click **"Access Admin Portal"**.
+2. **Default Credentials**: 
+   - **Email**: `admin@cooliebook.in`
+   - **Password**: `Admin@2026` *(Reset via `backend/reset-admin-password.js` if needed)*
+
+---
+
+### 🇮🇳 Built for Indian Railways
+*Transforming the platform experience, one booking at a time.*
