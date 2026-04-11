@@ -64,7 +64,7 @@ export default function Login() {
         confirmButtonColor: '#f97316',
         backdrop: 'rgba(0,0,0,0.8)'
       });
-      navigate('/dashboard');
+      navigate(res.data.user.role === 'coolie' ? '/coolie-dashboard' : '/dashboard');
     } catch (err) {
       Swal.fire({
         icon: 'error',
@@ -199,11 +199,23 @@ export default function Login() {
                   width: '100%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                   background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.875rem',
                   color: '#f8fafc', fontSize: '0.95rem', fontFamily: 'var(--font-body)', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
+                  marginBottom: '1.5rem'
                 }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
                   <ShieldCheck size={18} color="#10b981" />
                   Create a Secure Account
                 </button>
               </Link>
+
+              {/* Seamless Link to Admin Portal */}
+              <div style={{ textAlign: 'center' }}>
+                <Link to="/admin/login" style={{ 
+                  fontSize: '0.75rem', color: '#64748b', textDecoration: 'none', 
+                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem', transition: 'color 0.2s' 
+                }} onMouseEnter={(e) => e.currentTarget.style.color = '#10b981'} onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}>
+                  <ShieldCheck size={12} />
+                  Access Admin Portal
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
