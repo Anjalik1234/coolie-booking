@@ -47,8 +47,8 @@ exports.loginAdmin = async (req, res) => {
     // 5. Set Cookie
     res.cookie('admin_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+    secure: false,
+    sameSite: 'none',
       maxAge: 12 * 60 * 60 * 1000 // 12 hours
     });
 
